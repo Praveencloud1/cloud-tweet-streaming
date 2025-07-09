@@ -82,7 +82,7 @@ def run_mrjob_check(input_plaintext):
             os.remove(os.path.join(output_path, fname))
         os.rmdir(output_path)
     else:
-        print("⚠️ MRJob finished, but output folder was not found or was empty.")
+        print("MRJob finished, but output folder was not found or was empty.")
 
 
     if os.path.exists(cloud_script):
@@ -91,13 +91,25 @@ def run_mrjob_check(input_plaintext):
     return merged_results, time_spent
 
 
+def archive_timings(local_secs, cloud_secs, filename='timelog_results.csv', size=None):
+    write_header = not os.path.exists(filename)
 
-def archive_timings(local_secs, cloud_secs, filename='timelog_results.csv'):
-    with open(filename, 'w') as tracker:
-        tracker.write("RunType,Seconds\n")
-        tracker.write(f"PlainPython,{local_secs:.2f}\n")
-        tracker.write(f"DistributedMRJob,{cloud_secs:.2f}\n")
-    print(f"[ARCHIVE] Timing data saved in '{filename}'")
+    with open(filename, 'a') as tracker:
+        if write_header:
+            if size is not None:
+                tracker.write("Size,RunType,Seconds\n")
+            else:
+                tracker.write("RunType,Seconds\n")
+
+        if size is not None:
+            tracker.write(f"{size},PlainPython,{local_secs:.2f}\n")
+            tracker.write(f"{size},DistributedMRJob,{cloud_secs:.2f}\n")
+        else:
+            tracker.write(f"PlainPython,{local_secs:.2f}\n")
+            tracker.write(f"DistributedMRJob,{cloud_secs:.2f}\n")
+
+    print(f"[ARCHIVE] Timing data appended to '{filename}'")
+
 
 
 if __name__ == '__main__':
