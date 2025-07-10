@@ -31,18 +31,18 @@ This project demonstrates a scalable cloud processing pipeline that ingests twee
 
 ## Benchmark Example
 
-Benchmarks are saved in `benchmark_full_results.csv` and visualized using `plot_throughput.py`.
+Benchmarks are saved in `timelog_results.csv` and visualized using `plot_throughput.py`.
 
-| Size | RunType         | Seconds |
-|------|------------------|---------|
-| 1000 | PlainPython      | 0.01    |
-| 1000 | DistributedMRJob | 0.39    |
-| 10000| PlainPython      | 0.11    |
-| 10000| DistributedMRJob | 1.64    |
-| 30000| PlainPython      | 0.32    |
-| 30000| DistributedMRJob | 4.15    |
-| 74000| PlainPython      | 0.84    |
-| 74000| DistributedMRJob | 11.30   |
+| Size   | Run Type         | Seconds | Throughput (Records/sec) |
+|--------|------------------|---------|---------------------------|
+| 996    | PlainPython      | 0.01    | 79461.45                  |
+| 996    | DistributedMRJob | 0.38    | 2638.61                   |
+| 9888   | PlainPython      | 0.11    | 87312.72                  |
+| 9888   | DistributedMRJob | 1.63    | 6050.18                   |
+| 29738  | PlainPython      | 0.33    | 91395.26                  |
+| 29738  | DistributedMRJob | 4.12    | 7226.38                   |
+| 73317  | PlainPython      | 0.81    | 89981.80                  |
+| 73317  | DistributedMRJob | 9.97    | 7356.72                   |
 
 ---
 
