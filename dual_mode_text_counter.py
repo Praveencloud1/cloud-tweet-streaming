@@ -91,29 +91,27 @@ def run_mrjob_check(input_plaintext):
     return merged_results, time_spent
 
 
-def archive_timings(local_secs, cloud_secs, filename='timelog_results.csv', size=None):
+def archive_timings(local_secs, cloud_secs, filename='timelog_results.csv', size=None, total_records=None):
     write_header = not os.path.exists(filename)
 
     with open(filename, 'a') as tracker:
         if write_header:
-            if size is not None:
-                tracker.write("Size,RunType,Seconds\n")
-            else:
-                tracker.write("RunType,Seconds\n")
+            tracker.write("Size,RunType,Seconds,Throughput,Latency\n")
 
-        if size is not None:
-            tracker.write(f"{size},PlainPython,{local_secs:.2f}\n")
-            tracker.write(f"{size},DistributedMRJob,{cloud_secs:.2f}\n")
+        if size is not None and total_records is not None:
+            tracker.write(f"{size},PlainPython,{local_secs:.2f},{total_records/local_secs:.2f},{local_secs/total_records:.6f}\n")
+            tracker.write(f"{size},DistributedMRJob,{cloud_secs:.2f},{total_records/cloud_secs:.2f},{cloud_secs/total_records:.6f}\n")
         else:
-            tracker.write(f"PlainPython,{local_secs:.2f}\n")
-            tracker.write(f"DistributedMRJob,{cloud_secs:.2f}\n")
+            tracker.write(f"PlainPython,{local_secs:.2f},,\n")
+            tracker.write(f"DistributedMRJob,{cloud_secs:.2f},,\n")
 
     print(f"[ARCHIVE] Timing data appended to '{filename}'")
 
 
 
+
 if __name__ == '__main__':
-    structured_csv_file = 'twitter_training.csv'
+    structured_csv_file = 'twitter_1000.csv'
     interim_txt_input = 'intermediate_lines.txt'
 
     if not os.path.exists(structured_csv_file):
@@ -126,6 +124,8 @@ if __name__ == '__main__':
         sys.exit(1)
 
     extracted_lines = full_sheet['text'].dropna().astype(str).tolist()
+    record_count = len(extracted_lines)
+    print(f"Total records processed: {record_count}")
 
     with open(interim_txt_input, 'w', encoding='utf-8') as file_dumper:
         for text_entry in extracted_lines:
@@ -134,13 +134,25 @@ if __name__ == '__main__':
     handwritten_result, python_time = run_plain_python_check(extracted_lines)
     parallel_result, mrjob_time = run_mrjob_check(interim_txt_input)
 
+    sequential_throughput = record_count / python_time
+    parallel_throughput = record_count / mrjob_time
+
+    sequential_latency = python_time / record_count
+    parallel_latency = mrjob_time / record_count
+
     print("\n[SIMPLE] Top 5 Words:")
     print(Counter(handwritten_result).most_common(5))
 
     print("\n[DISTRIBUTED] Top 5 Words:")
     print(Counter(parallel_result).most_common(5))
 
-    archive_timings(python_time, mrjob_time)
+    print(f"\n[METRICS]")
+    print(f"Sequential Throughput: {sequential_throughput:.2f} records/sec")
+    print(f"Parallel Throughput:   {parallel_throughput:.2f} records/sec")
+    print(f"Sequential Latency:    {sequential_latency:.6f} sec/record")
+    print(f"Parallel Latency:      {parallel_latency:.6f} sec/record")
+
+    archive_timings(python_time, mrjob_time, size=record_count, total_records=record_count)
 
     if os.path.exists(interim_txt_input):
         os.remove(interim_txt_input)
