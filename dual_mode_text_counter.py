@@ -6,6 +6,7 @@ import sys
 import os
 import inspect
 import pandas as dream_io
+import boto3
 from collections import Counter
 from mrjob.job import MRJob
 
@@ -22,7 +23,6 @@ class ParallelWordAnalyzer(MRJob):
     def reducer(self, token, all_counts):
         yield (token, sum(all_counts))
 
-
 def run_plain_python_check(cloud_entries):
     print("\n[LOCAL-MODE] Counting words using simple Python...")
     tick_start = time.time()
@@ -37,7 +37,6 @@ def run_plain_python_check(cloud_entries):
     time_spent = tick_end - tick_start
     print(f"[LOCAL-MODE] Completed in {time_spent:.2f} seconds.")
     return manual_count_sheet, time_spent
-
 
 def run_mrjob_check(input_plaintext):
     print("\n[MRJOB-MODE] Distributing task using temporary MRJob script...")
@@ -73,7 +72,7 @@ def run_mrjob_check(input_plaintext):
                         try:
                             parts = raw_row.strip().split('\t')
                             if len(parts) == 2:
-                                word = parts[0].strip('"') 
+                                word = parts[0].strip('"')
                                 count = int(parts[1])
                                 merged_results[word] = count
                         except:
@@ -84,12 +83,10 @@ def run_mrjob_check(input_plaintext):
     else:
         print("MRJob finished, but output folder was not found or was empty.")
 
-
     if os.path.exists(cloud_script):
         os.remove(cloud_script)
 
     return merged_results, time_spent
-
 
 def archive_timings(local_secs, cloud_secs, filename='timelog_results.csv', size=None, total_records=None):
     write_header = not os.path.exists(filename)
@@ -102,13 +99,18 @@ def archive_timings(local_secs, cloud_secs, filename='timelog_results.csv', size
             tracker.write(f"{size},PlainPython,{local_secs:.2f},{total_records/local_secs:.2f},{local_secs/total_records:.6f}\n")
             tracker.write(f"{size},DistributedMRJob,{cloud_secs:.2f},{total_records/cloud_secs:.2f},{cloud_secs/total_records:.6f}\n")
         else:
-            tracker.write(f"PlainPython,{local_secs:.2f},,\n")
-            tracker.write(f"DistributedMRJob,{cloud_secs:.2f},,\n")
+            tracker.write(f"PlainPython,{local_secs:.2f},,,\n")
+            tracker.write(f"DistributedMRJob,{cloud_secs:.2f},,,\n")
 
     print(f"[ARCHIVE] Timing data appended to '{filename}'")
 
-
-
+def upload_file_to_s3(local_path, bucket_name, s3_key):
+    s3 = boto3.client('s3')
+    try:
+        s3.upload_file(local_path, bucket_name, s3_key)
+        print(f"[S3 UPLOAD] '{local_path}' uploaded to 's3://{bucket_name}/{s3_key}'")
+    except Exception as e:
+        print(f"[S3 ERROR] Failed to upload to S3: {e}")
 
 if __name__ == '__main__':
     structured_csv_file = 'twitter_1000.csv'
@@ -153,6 +155,10 @@ if __name__ == '__main__':
     print(f"Parallel Latency:      {parallel_latency:.6f} sec/record")
 
     archive_timings(python_time, mrjob_time, size=record_count, total_records=record_count)
+
+    s3_bucket = "catweetstreambucket"
+    s3_key = "metrics/timelog_results.csv"
+    upload_file_to_s3("timelog_results.csv", s3_bucket, s3_key)
 
     if os.path.exists(interim_txt_input):
         os.remove(interim_txt_input)
