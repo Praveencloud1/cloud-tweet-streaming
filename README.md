@@ -33,16 +33,16 @@ This project demonstrates a scalable cloud processing pipeline that ingests twee
 
 Benchmarks are saved in `timelog_results.csv` and visualized using `plot_throughput.py`.
 
-| Size   | Run Type         | Seconds | Throughput (Records/sec) |
-|--------|------------------|---------|---------------------------|
-| 996    | PlainPython      | 0.01    | 79461.45                  |
-| 996    | DistributedMRJob | 0.38    | 2638.61                   |
-| 9888   | PlainPython      | 0.11    | 87312.72                  |
-| 9888   | DistributedMRJob | 1.63    | 6050.18                   |
-| 29738  | PlainPython      | 0.33    | 91395.26                  |
-| 29738  | DistributedMRJob | 4.12    | 7226.38                   |
-| 73317  | PlainPython      | 0.81    | 89981.80                  |
-| 73317  | DistributedMRJob | 9.97    | 7356.72                   |
+| Size   | Run Type         | Seconds | Throughput (Records/sec) | Latency (sec/record) |
+|--------|------------------|---------|---------------------------|-----------------------|
+| 996    | PlainPython      | 0.01    | 80817.29                  | 0.000012              |
+| 996    | DistributedMRJob | 0.40    | 2520.26                   | 0.000397              |
+| 9888   | PlainPython      | 0.11    | 86855.94                  | 0.000012              |
+| 9888   | DistributedMRJob | 1.66    | 5964.55                   | 0.000168              |
+| 29738  | PlainPython      | 0.32    | 91715.89                  | 0.000011              |
+| 29738  | DistributedMRJob | 4.19    | 7097.72                   | 0.000141              |
+| 73317  | PlainPython      | 0.84    | 87305.57                  | 0.000011              |
+| 73317  | DistributedMRJob | 10.88   | 6736.47                   | 0.000148              |
 
 ---
 
